@@ -1,23 +1,27 @@
 ﻿using LotofacilAnalytics.DataCollector.Clients;
+using LotofacilAnalytics.DataCollector.Services;
+using LotofacilAnalytics.DataCollector.Storage;
 using LotofacilAnalytics.DataCollector.Validation;
 
-using var httpClient = new HttpClient();
+using var httpClient = new HttpClient
+{
+    Timeout = TimeSpan.FromSeconds(30)
+};
 
 var caixaApiClient = new CaixaApiClient(httpClient);
 
-var concurso = await caixaApiClient.ObterConcursoAsync(1);
+var diretorioRaw = Path.Combine(
+    Directory.GetCurrentDirectory(),
+    "data",
+    "raw");
 
-if (concurso is null)
-{
-    Console.WriteLine("Não foi possível obter o concurso.");
-    return;
-}
+var storage = new ConcursoJsonStorage(diretorioRaw);
 
 var validator = new ConcursoValidator();
 
-var valido = validator.Validar(concurso);
+var updateService = new ConcursoUpdateService(
+    caixaApiClient,
+    storage,
+    validator);
 
-Console.WriteLine($"Concurso: {concurso.Numero}");
-Console.WriteLine($"Data: {concurso.DataApuracao}");
-Console.WriteLine($"Quantidade de dezenas: {concurso.ListaDezenas.Count}");
-Console.WriteLine($"Concurso válido: {valido}");
+await updateService.AtualizarAsync(3);

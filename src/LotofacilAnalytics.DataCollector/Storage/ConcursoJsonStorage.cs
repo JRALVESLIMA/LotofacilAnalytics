@@ -31,4 +31,34 @@ public class ConcursoJsonStorage
 
         await File.WriteAllTextAsync(caminhoArquivo, json);
     }
+
+    public Task<int?> ObterUltimoConcursoSalvoAsync()
+    {
+        var arquivos = Directory.GetFiles(
+            _diretorio,
+            "concurso_*.json");
+
+        if (arquivos.Length == 0)
+        {
+            return Task.FromResult<int?>(null);
+        }
+
+        var numeros = arquivos
+            .Select(Path.GetFileNameWithoutExtension)
+            .Select(nome => nome!.Replace("concurso_", ""))
+            .Select(numero => int.TryParse(numero, out var resultado)
+                ? resultado
+                : (int?)null)
+            .Where(numero => numero.HasValue)
+            .Select(numero => numero!.Value);
+
+        var ultimoConcurso = numeros.Any()
+            ? numeros.Max()
+            : (int?)null;
+
+        return Task.FromResult(ultimoConcurso);
+
+        
+    }
 }
+
