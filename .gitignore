@@ -39,3 +39,6 @@ obj/
 
 ### Mac OS ###
 .DS_Store
+
+### Lotofácil Analytics ###
+data/raw/

@@ -24,4 +24,11 @@ var updateService = new ConcursoUpdateService(
     storage,
     validator);
 
-await updateService.AtualizarAsync(3);
+await updateService.AtualizarAsync();
+
+var auditor =
+    new BaseHistoricaAuditor(
+        diretorioRaw,
+        validator);
+
+await auditor.AuditarAsync();
