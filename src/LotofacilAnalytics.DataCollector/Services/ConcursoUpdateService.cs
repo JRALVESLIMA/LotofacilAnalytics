@@ -1,6 +1,7 @@
 using LotofacilAnalytics.DataCollector.Clients;
 using LotofacilAnalytics.DataCollector.Storage;
 using LotofacilAnalytics.DataCollector.Validation;
+using LotofacilAnalytics.DataCollector.Mappers;
 
 namespace LotofacilAnalytics.DataCollector.Services;
 
@@ -9,15 +10,18 @@ public class ConcursoUpdateService
     private readonly CaixaApiClient _caixaApiClient;
     private readonly ConcursoJsonStorage _storage;
     private readonly ConcursoValidator _validator;
+    private readonly ConcursoMapper _mapper;
 
     public ConcursoUpdateService(
         CaixaApiClient caixaApiClient,
         ConcursoJsonStorage storage,
-        ConcursoValidator validator)
+        ConcursoValidator validator,
+        ConcursoMapper mapper)
     {
         _caixaApiClient = caixaApiClient;
         _storage = storage;
         _validator = validator;
+        _mapper = mapper;
     }
 
     public async Task AtualizarAsync(int? limite = null)
@@ -127,6 +131,8 @@ public class ConcursoUpdateService
 
                     return;
                 }
+
+                var concursoDominio = _mapper.Mapear(concurso);
 
                 await _storage.SalvarAsync(concurso);
 

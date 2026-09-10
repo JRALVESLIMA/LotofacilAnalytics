@@ -2,6 +2,7 @@
 using LotofacilAnalytics.DataCollector.Services;
 using LotofacilAnalytics.DataCollector.Storage;
 using LotofacilAnalytics.DataCollector.Validation;
+using LotofacilAnalytics.DataCollector.Mappers;
 
 using var httpClient = new HttpClient
 {
@@ -19,10 +20,13 @@ var storage = new ConcursoJsonStorage(diretorioRaw);
 
 var validator = new ConcursoValidator();
 
+var mapper = new ConcursoMapper();
+
 var updateService = new ConcursoUpdateService(
     caixaApiClient,
     storage,
-    validator);
+    validator,
+    mapper);
 
 await updateService.AtualizarAsync();
 
