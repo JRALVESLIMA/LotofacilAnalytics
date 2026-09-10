@@ -57,5 +57,48 @@ public class Concurso
 
         Numero = numero;
         DataSorteio = dataSorteio;
+        
+    }
+
+    public int SomaDezenas
+    {
+        get
+        {
+            return Dezenas.Sum();
+        }
+    }
+
+    public int QuantidadeDezenasPares
+    {
+        get
+        {
+            return Dezenas
+                .Where(dezena => dezena % 2 == 0)
+                .Count();
+        }
+    }
+
+    public int QuantidadeDezenasImpares
+    {
+        get
+        {
+            return 15 - QuantidadeDezenasPares;
+        }
+    }
+
+    public int MenorDezena
+    {
+        get
+        {
+            return Dezenas.Min();
+        }
+    }
+
+    public int MaiorDezena
+    {
+        get
+        {
+            return Dezenas.Max();
+        }
     }
 }

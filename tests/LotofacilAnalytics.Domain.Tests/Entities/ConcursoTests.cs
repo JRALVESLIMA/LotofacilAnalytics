@@ -117,4 +117,60 @@ public class ConcursoTests
                 new DateTime(2026, 9, 3),
                 null!));
     }
+
+
+    [Fact]
+    public void DeveCalcularASomaDasDezenas()
+    {
+        var concurso = new Concurso(
+            3779,
+            new DateTime(2026, 9, 3),
+            DezenasValidas);
+
+        Assert.Equal(199, concurso.SomaDezenas);
+    }
+
+    [Fact]
+    public void DeveCalcularAQuantidadeDeDezenasPares()
+    {
+        var concurso = new Concurso(
+            3779,
+            new DateTime(2026, 9, 3),
+            DezenasValidas);
+
+        Assert.Equal(6, concurso.QuantidadeDezenasPares);
+    }
+
+    [Fact]
+    public void DeveCalcularAQuantidadeDeDezenasImpares()
+    {
+        var concurso = new Concurso(
+            3779,
+            new DateTime(2026, 9, 3),
+            DezenasValidas);
+
+        Assert.Equal(9, concurso.QuantidadeDezenasImpares);
+    }
+
+    [Fact]
+    public void DeveIdentificarAMenorDezena()
+    {
+        var concurso = new Concurso(
+            3779,
+            new DateTime(2026, 9, 3),
+            DezenasValidas);
+
+        Assert.Equal(3, concurso.MenorDezena);
+    }
+
+    [Fact]
+    public void DeveIdentificarAMaiorDezena()
+    {
+        var concurso = new Concurso(
+            3779,
+            new DateTime(2026, 9, 3),
+            DezenasValidas);
+
+        Assert.Equal(25, concurso.MaiorDezena);
+    }
 }
