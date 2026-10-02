@@ -50,4 +50,24 @@ public class BacktestingService
             historicoDisponivel,
             resultadosJogos);
     }
+
+    public List<RodadaBacktesting> Executar(
+        IEnumerable<Concurso> historico,
+        IEstrategia estrategia)
+    {
+        ArgumentNullException.ThrowIfNull(historico);
+        ArgumentNullException.ThrowIfNull(estrategia);
+
+        var concursos = historico
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        return concursos
+            .Skip(1)
+            .Select(concurso => PrepararRodada(
+                concursos,
+                concurso,
+                estrategia))
+            .ToList();
+    }
 }
