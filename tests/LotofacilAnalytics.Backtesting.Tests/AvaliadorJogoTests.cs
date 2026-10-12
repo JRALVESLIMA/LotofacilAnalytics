@@ -63,5 +63,59 @@ public class AvaliadorJogoTests
         acertos.Should().Be(15);
     }
 
+    [Fact]
+    public void Deve_rejeitar_jogo_nulo()
+    {
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            null!,
+            Enumerable.Range(1, 15));
+
+        acao.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Deve_rejeitar_resultado_real_nulo()
+    {
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            Enumerable.Range(1, 15),
+            null!);
+
+        acao.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Deve_rejeitar_jogo_com_dezenas_duplicadas()
+    {
+        var jogo = Enumerable.Range(1, 14)
+            .Append(14);
+
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            jogo,
+            Enumerable.Range(1, 15));
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Deve_rejeitar_jogo_com_dezena_fora_do_intervalo()
+    {
+        var jogo = Enumerable.Range(1, 14)
+            .Append(26);
+
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            jogo,
+            Enumerable.Range(1, 15));
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
     
 }
