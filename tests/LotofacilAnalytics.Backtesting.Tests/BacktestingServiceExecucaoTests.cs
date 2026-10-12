@@ -232,6 +232,34 @@ public class BacktestingServiceExecucaoTests
         resultados.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Deve_executar_backtesting_com_historico_historico_valido()
+    {
+        var historico = new[]
+        {
+            CriarConcurso(1),
+            CriarConcurso(2),
+            CriarConcurso(3),
+            CriarConcurso(4),
+            CriarConcurso(5)
+        };
+
+        var estrategia = new EstrategiaFake();
+
+        var service = new BacktestingService();
+
+        var resultado = service.Executar(
+            historico,
+            estrategia);
+
+        resultado.Should().HaveCount(4);
+
+        resultado[0].ConcursoAlvo.Numero.Should().Be(2);
+        resultado[1].ConcursoAlvo.Numero.Should().Be(3);
+        resultado[2].ConcursoAlvo.Numero.Should().Be(4);
+        resultado[3].ConcursoAlvo.Numero.Should().Be(5);
+    }
+
     private static Concurso CriarConcurso(int numero)
     {
         return new Concurso(
