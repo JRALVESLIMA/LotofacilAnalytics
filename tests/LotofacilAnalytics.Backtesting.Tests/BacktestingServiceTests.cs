@@ -387,6 +387,34 @@ public class BacktestingServiceTests
             .BeEquivalentTo(new[] { 15, 5 });
     }
 
+    
+    [Fact]
+    public void Deve_rejeitar_estrategia_que_nao_gera_jogos()
+    {
+        var historico = new List<Concurso>
+        {
+            CriarConcurso(1),
+            CriarConcurso(2),
+            CriarConcurso(3),
+            CriarConcurso(4),
+            CriarConcurso(5)
+        };
+
+        var concursoAlvo = CriarConcurso(6);
+        var jogosVazios = new List<IReadOnlyCollection<int>>();
+        var estrategia = new EstrategiaFake(jogosVazios);
+        var service = new BacktestingService();
+
+        Action acao = () => service.PrepararRodada(
+            historico,
+            concursoAlvo,
+            estrategia);
+
+        acao.Should().Throw<InvalidOperationException>()
+            .WithMessage("*nenhum jogo*");
+    }
+
+
     private static Concurso CriarConcurso(int numero)
     {
         var dezenas = Enumerable.Range(1, 15);

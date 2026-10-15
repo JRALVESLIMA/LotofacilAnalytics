@@ -30,6 +30,12 @@ public class BacktestingService
 
         var jogosGerados = estrategia.GerarJogos(historicoDisponivel);
 
+        if (jogosGerados is null || jogosGerados.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "A estratégia não gerou nenhum jogo para avaliar.");
+        }
+
         var avaliador = new AvaliadorJogo();
 
         var resultadosJogos = jogosGerados

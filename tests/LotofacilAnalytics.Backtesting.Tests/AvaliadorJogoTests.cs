@@ -118,4 +118,50 @@ public class AvaliadorJogoTests
     }
 
     
+    [Fact]
+    public void Deve_rejeitar_resultado_real_com_quantidade_incorreta_de_dezenas()
+    {
+        var jogo = Enumerable.Range(1, 15);
+        var resultadoReal = Enumerable.Range(1, 14);
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            jogo,
+            resultadoReal);
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Deve_rejeitar_resultado_real_com_dezenas_duplicadas()
+    {
+        var jogo = Enumerable.Range(1, 15);
+        var resultadoReal = Enumerable.Range(1, 14)
+            .Append(14);
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            jogo,
+            resultadoReal);
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Deve_rejeitar_resultado_real_com_dezena_fora_do_intervalo()
+    {
+        var jogo = Enumerable.Range(1, 15);
+        var resultadoReal = Enumerable.Range(1, 14)
+            .Append(26);
+        var avaliador = new AvaliadorJogo();
+
+        var acao = () => avaliador.CalcularAcertos(
+            jogo,
+            resultadoReal);
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
+
+    
 }
