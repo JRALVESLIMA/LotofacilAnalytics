@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LotofacilAnalytics.Domain\LotofacilAnalytics.Domain.csproj" />
+    <ProjectReference Include="..\LotofacilAnalytics.Analysis\LotofacilAnalytics.Analysis.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
