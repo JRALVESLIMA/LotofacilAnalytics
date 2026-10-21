@@ -123,6 +123,39 @@ public class BacktestingResultadoTests
         distribuicao.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Deve_retornar_metricas_zeradas_quando_nao_houver_rodadas()
+    {
+        var resultado = new BacktestingResultado(
+            Array.Empty<RodadaBacktesting>());
+
+        resultado.QuantidadeRodadas.Should().Be(0);
+        resultado.QuantidadeJogos.Should().Be(0);
+        resultado.MediaAcertos.Should().Be(0);
+        resultado.MaiorAcertos.Should().Be(0);
+        resultado.MenorAcertos.Should().Be(0);
+        resultado.QuantidadeJogosComAcertos(10).Should().Be(0);
+        resultado.ObterDistribuicaoAcertos().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Deve_calcular_media_ignorando_rodadas_sem_jogos()
+    {
+        var rodadas = new[]
+        {
+            CriarRodada(100),
+            CriarRodadaComAcertos(101, 8, 10),
+            CriarRodada(102),
+            CriarRodadaComAcertos(103, 12)
+        };
+
+        var resultado = new BacktestingResultado(rodadas);
+
+        resultado.QuantidadeRodadas.Should().Be(4);
+        resultado.QuantidadeJogos.Should().Be(3);
+        resultado.MediaAcertos.Should().Be(10);
+    }
+
     private static RodadaBacktesting CriarRodada(
         int numeroConcurso,
         int quantidadeJogos = 0)

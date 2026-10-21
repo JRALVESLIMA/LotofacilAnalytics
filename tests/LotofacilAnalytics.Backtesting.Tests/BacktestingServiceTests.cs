@@ -414,6 +414,29 @@ public class BacktestingServiceTests
             .WithMessage("*nenhum jogo*");
     }
 
+    [Fact]
+    public void Deve_retornar_resultado_consolidado_ao_executar_backtesting()
+    {
+        var historico = Enumerable
+            .Range(1, 6)
+            .Select(CriarConcurso)
+            .ToList();
+
+        var jogosGerados = new List<IReadOnlyCollection<int>>
+        {
+            Enumerable.Range(1, 15).ToArray()
+        };
+
+        var estrategia = new EstrategiaFake(jogosGerados);
+        var service = new BacktestingService();
+
+        var resultado = service.ExecutarConsolidado(
+            historico,
+            estrategia);
+
+        resultado.QuantidadeRodadas.Should().Be(5);
+        resultado.QuantidadeJogos.Should().Be(5);
+    }
 
     private static Concurso CriarConcurso(int numero)
     {

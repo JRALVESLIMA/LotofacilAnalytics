@@ -76,4 +76,13 @@ public class BacktestingService
                 estrategia))
             .ToList();
     }
+
+    public BacktestingResultado ExecutarConsolidado(
+        IEnumerable<Concurso> historico,
+        IEstrategia estrategia)
+    {
+        var rodadas = Executar(historico, estrategia);
+
+        return new BacktestingResultado(rodadas);
+    }
 }
