@@ -152,6 +152,77 @@ public class BacktestingIntegracaoTests
         }
     }
 
+    [Fact]
+    public async Task Deve_comparar_estrategias_no_mesmo_periodo_historico()
+    {
+        var diretorioRaw = EncontrarDiretorioRaw();
+        var reader = CriarReader(diretorioRaw);
+        var historico = await reader.LerTodosAsync();
+
+        historico.Should().NotBeEmpty();
+        ValidarIntegridadeHistorico(historico);
+
+        var concursosOrdenados = historico
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        var numeroInicial = concursosOrdenados[^101].Numero;
+        var numeroFinal = concursosOrdenados[^1].Numero;
+
+        var service = new BacktestingService();
+
+        var resultadoFrequencia = service.ExecutarConsolidado(
+            historico,
+            new EstrategiaFrequenciaDezenas(),
+            numeroInicial,
+            numeroFinal);
+
+        var resultadoDezenasFixas = service.ExecutarConsolidado(
+            historico,
+            new EstrategiaDezenasFixas(),
+            numeroInicial,
+            numeroFinal);
+
+        resultadoFrequencia.QuantidadeRodadas
+            .Should()
+            .Be(resultadoDezenasFixas.QuantidadeRodadas);
+
+        resultadoFrequencia.QuantidadeJogos
+            .Should()
+            .Be(resultadoDezenasFixas.QuantidadeJogos);
+
+        resultadoFrequencia.Rodadas
+            .Select(rodada => rodada.ConcursoAlvo.Numero)
+            .Should()
+            .Equal(
+                resultadoDezenasFixas.Rodadas
+                    .Select(rodada => rodada.ConcursoAlvo.Numero));
+
+        resultadoFrequencia.Rodadas.Should().OnlyContain(
+            rodada => rodada.ResultadosJogos.Count == 1);
+
+        resultadoDezenasFixas.Rodadas.Should().OnlyContain(
+            rodada => rodada.ResultadosJogos.Count == 1);
+
+        resultadoFrequencia.MediaAcertos
+            .Should()
+            .BeInRange(0, 15);
+
+        resultadoDezenasFixas.MediaAcertos
+            .Should()
+            .BeInRange(0, 15);
+
+        resultadoFrequencia.ObterDistribuicaoAcertos()
+            .Values.Sum()
+            .Should()
+            .Be(resultadoFrequencia.QuantidadeJogos);
+
+        resultadoDezenasFixas.ObterDistribuicaoAcertos()
+            .Values.Sum()
+            .Should()
+            .Be(resultadoDezenasFixas.QuantidadeJogos);
+    }
+
     private static string EncontrarDiretorioRaw()
     {
         var diretorio = new DirectoryInfo(
