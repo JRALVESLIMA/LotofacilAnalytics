@@ -260,6 +260,81 @@ public class BacktestingServiceExecucaoTests
         resultado[3].ConcursoAlvo.Numero.Should().Be(5);
     }
 
+    [Fact]
+    public void Deve_executar_apenas_os_concursos_dentro_do_periodo_informado()
+    {
+        var historico = Enumerable
+            .Range(1, 10)
+            .Select(CriarConcurso)
+            .ToList();
+
+        var estrategia = new EstrategiaFake();
+        var service = new BacktestingService();
+
+        var resultados = service.Executar(
+            historico,
+            estrategia,
+            4,
+            7);
+
+        resultados
+            .Select(resultado => resultado.ConcursoAlvo.Numero)
+            .Should()
+            .Equal(4, 5, 6, 7);
+    }
+
+    [Fact]
+    public void Deve_preservar_o_historico_anterior_ao_alvo_ao_avaliar_um_periodo()
+    {
+        var historico = Enumerable
+            .Range(1, 10)
+            .Select(CriarConcurso)
+            .ToList();
+
+        var estrategia = new EstrategiaFake();
+        var service = new BacktestingService();
+
+        service.Executar(
+            historico,
+            estrategia,
+            4,
+            5);
+
+        estrategia.HistoricosRecebidos
+            .Select(h => h.Select(c => c.Numero))
+            .Should()
+            .BeEquivalentTo(
+                new[]
+                {
+                    new[] { 1, 2, 3 },
+                    new[] { 1, 2, 3, 4 }
+                });
+    }
+
+    [Theory]
+    [InlineData(0, 5)]
+    [InlineData(6, 5)]
+    public void Deve_rejeitar_limites_de_periodo_invalidos(
+        int numeroInicial,
+        int numeroFinal)
+    {
+        var historico = Enumerable
+            .Range(1, 10)
+            .Select(CriarConcurso)
+            .ToList();
+
+        var estrategia = new EstrategiaFake();
+        var service = new BacktestingService();
+
+        Action acao = () => service.Executar(
+            historico,
+            estrategia,
+            numeroInicial,
+            numeroFinal);
+
+        acao.Should().Throw<ArgumentException>();
+    }
+
     private static Concurso CriarConcurso(int numero)
     {
         return new Concurso(

@@ -72,6 +72,51 @@ public class BacktestingIntegracaoTests
             .Should().Be(ultimoConcurso.Numero);
     }
 
+    [Fact]
+    public async Task Deve_executar_estrategia_de_frequencia_com_historico_real()
+    {
+        var diretorioRaw = EncontrarDiretorioRaw();
+        var reader = CriarReader(diretorioRaw);
+
+        var historico = await reader.LerTodosAsync();
+
+        historico.Should().NotBeEmpty();
+        ValidarIntegridadeHistorico(historico);
+
+        var estrategia = new EstrategiaFrequenciaDezenas();
+        var service = new BacktestingService();
+
+        var resultado = service.ExecutarConsolidado(
+            historico,
+            estrategia);
+
+        resultado.QuantidadeRodadas
+            .Should()
+            .Be(historico.Count - 1);
+
+        resultado.QuantidadeJogos
+            .Should()
+            .Be(resultado.QuantidadeRodadas);
+
+        resultado.Rodadas.Should().OnlyContain(
+            rodada => rodada.ResultadosJogos.Count == 1);
+
+        resultado.Rodadas.Should().OnlyContain(
+            rodada => rodada.ResultadosJogos
+                .Single()
+                .QuantidadeAcertos >= 0
+                    && rodada.ResultadosJogos
+                        .Single()
+                        .QuantidadeAcertos <= 15);
+
+        resultado.ObterDistribuicaoAcertos()
+            .Values
+            .Sum()
+            .Should()
+            .Be(resultado.QuantidadeJogos);
+    }
+
+
     private static ConcursoHistoricoReader CriarReader(
         string diretorioRaw)
     {

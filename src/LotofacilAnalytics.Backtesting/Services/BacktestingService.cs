@@ -1,3 +1,4 @@
+
 using LotofacilAnalytics.Domain.Entities;
 using LotofacilAnalytics.Backtesting.Models;
 using LotofacilAnalytics.Backtesting.Strategies;
@@ -10,8 +11,12 @@ public class BacktestingService
         IEnumerable<Concurso> historico,
         Concurso concursoAlvo)
     {
+        ArgumentNullException.ThrowIfNull(historico);
+        ArgumentNullException.ThrowIfNull(concursoAlvo);
+
         return historico
             .Where(concurso => concurso.Numero < concursoAlvo.Numero)
+            .OrderBy(concurso => concurso.Numero)
             .ToList();
     }
 
@@ -45,9 +50,7 @@ public class BacktestingService
                     jogo,
                     concursoAlvo.Dezenas);
 
-                return new ResultadoJogo(
-                    jogo,
-                    acertos);
+                return new ResultadoJogo(jogo, acertos);
             })
             .ToList();
 
@@ -68,8 +71,52 @@ public class BacktestingService
             .OrderBy(concurso => concurso.Numero)
             .ToList();
 
-        return concursos
-            .Skip(1)
+        if (concursos.Count <= 1)
+        {
+            return new List<RodadaBacktesting>();
+        }
+
+        return Executar(
+            concursos,
+            estrategia,
+            concursos[1].Numero,
+            concursos[^1].Numero);
+    }
+
+    public List<RodadaBacktesting> Executar(
+        IEnumerable<Concurso> historico,
+        IEstrategia estrategia,
+        int numeroInicial,
+        int numeroFinal)
+    {
+        ArgumentNullException.ThrowIfNull(historico);
+        ArgumentNullException.ThrowIfNull(estrategia);
+
+        if (numeroInicial <= 0 || numeroFinal < numeroInicial)
+        {
+            throw new ArgumentException(
+                "O período informado é inválido.");
+        }
+
+        var concursos = historico
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        if (concursos.Count <= 1)
+        {
+            return new List<RodadaBacktesting>();
+        }
+
+        var primeiroNumero = concursos[0].Numero;
+
+        var concursosAlvo = concursos
+            .Where(concurso =>
+                concurso.Numero >= numeroInicial &&
+                concurso.Numero <= numeroFinal &&
+                concurso.Numero > primeiroNumero)
+            .ToList();
+
+        return concursosAlvo
             .Select(concurso => PrepararRodada(
                 concursos,
                 concurso,
@@ -82,6 +129,21 @@ public class BacktestingService
         IEstrategia estrategia)
     {
         var rodadas = Executar(historico, estrategia);
+
+        return new BacktestingResultado(rodadas);
+    }
+
+    public BacktestingResultado ExecutarConsolidado(
+        IEnumerable<Concurso> historico,
+        IEstrategia estrategia,
+        int numeroInicial,
+        int numeroFinal)
+    {
+        var rodadas = Executar(
+            historico,
+            estrategia,
+            numeroInicial,
+            numeroFinal);
 
         return new BacktestingResultado(rodadas);
     }

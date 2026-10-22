@@ -1,5 +1,6 @@
 
 using FluentAssertions;
+using LotofacilAnalytics.Backtesting.Services;
 using LotofacilAnalytics.Backtesting.Strategies;
 using LotofacilAnalytics.Domain.Entities;
 
@@ -68,6 +69,39 @@ public class EstrategiaFrequenciaDezenasTests
 
         acao.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void Deve_executar_estrategia_de_frequencia_e_consolidar_resultados()
+    {
+        var historico = Enumerable
+            .Range(1, 5)
+            .Select(numero => CriarConcurso(
+                numero,
+                Enumerable.Range(1, 15)))
+            .ToList();
+
+        var estrategia = new EstrategiaFrequenciaDezenas();
+        var service = new BacktestingService();
+
+        var resultado = service.ExecutarConsolidado(
+            historico,
+            estrategia);
+
+        resultado.QuantidadeRodadas.Should().Be(4);
+        resultado.QuantidadeJogos.Should().Be(4);
+
+        resultado.Rodadas.Should().HaveCount(4);
+
+        resultado.Rodadas.Should().OnlyContain(
+            rodada => rodada.ResultadosJogos.Count == 1);
+
+        resultado.ObterDistribuicaoAcertos()
+            .Values
+            .Sum()
+            .Should()
+            .Be(4);
+    }
+
 
     private static List<Concurso> CriarHistorico()
     {

@@ -415,6 +415,32 @@ public class BacktestingServiceTests
     }
 
     [Fact]
+    public void Deve_retornar_zero_rodadas_quando_houver_apenas_um_concurso()
+    {
+        var historico = new List<Concurso>
+        {
+            CriarConcurso(1)
+        };
+
+        var estrategia = new EstrategiaFake(
+            new List<IReadOnlyCollection<int>>
+            {
+                Enumerable.Range(1, 15).ToArray()
+            });
+
+        var service = new BacktestingService();
+
+        var resultado = service.ExecutarConsolidado(
+            historico,
+            estrategia);
+
+        resultado.QuantidadeRodadas.Should().Be(0);
+        resultado.QuantidadeJogos.Should().Be(0);
+        resultado.MediaAcertos.Should().Be(0);
+        resultado.ObterDistribuicaoAcertos().Should().BeEmpty();
+    }
+
+    [Fact]
     public void Deve_retornar_resultado_consolidado_ao_executar_backtesting()
     {
         var historico = Enumerable
@@ -436,6 +462,32 @@ public class BacktestingServiceTests
 
         resultado.QuantidadeRodadas.Should().Be(5);
         resultado.QuantidadeJogos.Should().Be(5);
+    }
+
+    [Fact]
+    public void Deve_retornar_resultado_consolidado_apenas_do_periodo_informado()
+    {
+        var historico = Enumerable
+            .Range(1, 10)
+            .Select(CriarConcurso)
+            .ToList();
+
+        var jogosGerados = new List<IReadOnlyCollection<int>>
+        {
+            Enumerable.Range(1, 15).ToArray()
+        };
+
+        var estrategia = new EstrategiaFake(jogosGerados);
+        var service = new BacktestingService();
+
+        var resultado = service.ExecutarConsolidado(
+            historico,
+            estrategia,
+            4,
+            7);
+
+        resultado.QuantidadeRodadas.Should().Be(4);
+        resultado.QuantidadeJogos.Should().Be(4);
     }
 
     private static Concurso CriarConcurso(int numero)
