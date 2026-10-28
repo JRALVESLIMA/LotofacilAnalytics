@@ -223,6 +223,100 @@ public class BacktestingIntegracaoTests
             .Be(resultadoDezenasFixas.QuantidadeJogos);
     }
 
+    [Fact]
+    public async Task Deve_executar_backtesting_em_dois_periodos_historicos_distintos()
+    {
+        var diretorioRaw = EncontrarDiretorioRaw();
+        var reader = CriarReader(diretorioRaw);
+        var historico = await reader.LerTodosAsync();
+
+        historico.Should().NotBeEmpty();
+        ValidarIntegridadeHistorico(historico);
+
+        var concursosOrdenados = historico
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        var quantidadeConcursos = concursosOrdenados.Count;
+        var indiceInicio = 1;
+        var indiceMeio = quantidadeConcursos / 2;
+
+        var primeiroPeriodoInicial = concursosOrdenados[indiceInicio].Numero;
+        var primeiroPeriodoFinal = concursosOrdenados[indiceMeio - 1].Numero;
+
+        var segundoPeriodoInicial = concursosOrdenados[indiceMeio].Numero;
+        var segundoPeriodoFinal = concursosOrdenados[^1].Numero;
+
+        var service = new BacktestingService();
+        var estrategia = new EstrategiaFrequenciaDezenas();
+
+        var primeiroResultado = service.ExecutarConsolidado(
+            historico,
+            estrategia,
+            primeiroPeriodoInicial,
+            primeiroPeriodoFinal);
+
+        var segundoResultado = service.ExecutarConsolidado(
+            historico,
+            estrategia,
+            segundoPeriodoInicial,
+            segundoPeriodoFinal);
+
+        primeiroResultado.Rodadas
+            .Select(rodada => rodada.ConcursoAlvo.Numero)
+            .Should()
+            .Equal(
+                concursosOrdenados
+                    .Where(concurso =>
+                        concurso.Numero >= primeiroPeriodoInicial &&
+                        concurso.Numero <= primeiroPeriodoFinal)
+                    .Select(concurso => concurso.Numero));
+
+        segundoResultado.Rodadas
+            .Select(rodada => rodada.ConcursoAlvo.Numero)
+            .Should()
+            .Equal(
+                concursosOrdenados
+                    .Where(concurso =>
+                        concurso.Numero >= segundoPeriodoInicial &&
+                        concurso.Numero <= segundoPeriodoFinal)
+                    .Select(concurso => concurso.Numero));
+
+        primeiroResultado.Rodadas.Last().ConcursoAlvo.Numero
+            .Should()
+            .BeLessThan(
+                segundoResultado.Rodadas.First().ConcursoAlvo.Numero);
+
+        primeiroResultado.QuantidadeRodadas
+            .Should()
+            .Be(primeiroPeriodoFinal - primeiroPeriodoInicial + 1);
+
+        segundoResultado.QuantidadeRodadas
+            .Should()
+            .Be(segundoPeriodoFinal - segundoPeriodoInicial + 1);
+
+        primeiroResultado.QuantidadeJogos
+            .Should()
+            .Be(primeiroResultado.QuantidadeRodadas);
+
+        segundoResultado.QuantidadeJogos
+            .Should()
+            .Be(segundoResultado.QuantidadeRodadas);
+
+        primeiroResultado.MediaAcertos.Should().BeInRange(0, 15);
+        segundoResultado.MediaAcertos.Should().BeInRange(0, 15);
+
+        primeiroResultado.ObterDistribuicaoAcertos()
+            .Values.Sum()
+            .Should()
+            .Be(primeiroResultado.QuantidadeJogos);
+
+        segundoResultado.ObterDistribuicaoAcertos()
+            .Values.Sum()
+            .Should()
+            .Be(segundoResultado.QuantidadeJogos);
+    }
+
     private static string EncontrarDiretorioRaw()
     {
         var diretorio = new DirectoryInfo(
