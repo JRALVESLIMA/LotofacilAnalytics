@@ -1,5 +1,6 @@
 using LotofacilAnalytics.App.Models;
 using LotofacilAnalytics.Domain.Entities;
+using LotofacilAnalytics.Backtesting.Models;
 
 namespace LotofacilAnalytics.App.Presentation;
 
@@ -363,6 +364,51 @@ public class ConsoleReporter
                 $"{item.Value} concursos");
         }
 
+        Console.WriteLine();
+    }
+    
+    public void ExibirComparacaoEstrategias(
+        IReadOnlyCollection<ComparacaoEstrategiaResultado> resultados)
+    {
+        ArgumentNullException.ThrowIfNull(resultados);
+
+        ExibirTitulo("COMPARAÇÃO DE ESTRATÉGIAS");
+
+        if (resultados.Count == 0)
+        {
+            Console.WriteLine("Nenhuma estratégia foi avaliada.");
+            Console.WriteLine();
+            return;
+        }
+
+        Console.WriteLine(
+            $"{"Estratégia",-22} " +
+            $"{"Jogos",7} " +
+            $"{"Média",8} " +
+            $"{"Mín.",6} " +
+            $"{"Máx.",6} " +
+            $"{"11+",6} " +
+            $"{"13+",6}");
+
+        Console.WriteLine(new string('-', 67));
+
+        foreach (var resultado in resultados
+            .OrderByDescending(r => r.MediaAcertos)
+            .ThenBy(r => r.NomeEstrategia))
+        {
+            Console.WriteLine(
+                $"{resultado.NomeEstrategia,-22} " +
+                $"{resultado.QuantidadeJogos,7} " +
+                $"{resultado.MediaAcertos,8:F2} " +
+                $"{resultado.MenorAcertos,6} " +
+                $"{resultado.MaiorAcertos,6} " +
+                $"{resultado.JogosCom11OuMaisAcertos,6} " +
+                $"{resultado.JogosCom13OuMaisAcertos,6}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine(
+            "Resultados históricos: não representam previsão de sorteios futuros.");
         Console.WriteLine();
     }
 

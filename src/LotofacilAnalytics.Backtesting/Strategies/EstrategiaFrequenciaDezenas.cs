@@ -6,12 +6,7 @@ namespace LotofacilAnalytics.Backtesting.Strategies;
 
 public class EstrategiaFrequenciaDezenas : IEstrategia
 {
-    private readonly AnaliseFrequenciaDezenas _analiseFrequencia;
-
-    public EstrategiaFrequenciaDezenas()
-    {
-        _analiseFrequencia = new AnaliseFrequenciaDezenas();
-    }
+    private readonly AnaliseFrequenciaDezenas _analiseFrequencia = new();
 
     public IReadOnlyCollection<IReadOnlyCollection<int>> GerarJogos(
         IReadOnlyCollection<Concurso> historico)
@@ -25,9 +20,8 @@ public class EstrategiaFrequenciaDezenas : IEstrategia
                 nameof(historico));
         }
 
-        var frequencias = _analiseFrequencia.CalcularFrequencia(historico);
-
-        var dezenasSelecionadas = frequencias
+        var dezenasSelecionadas = _analiseFrequencia
+            .CalcularFrequencia(historico)
             .OrderByDescending(item => item.Value)
             .ThenBy(item => item.Key)
             .Take(15)
@@ -37,6 +31,6 @@ public class EstrategiaFrequenciaDezenas : IEstrategia
 
         IReadOnlyCollection<int> jogo = dezenasSelecionadas;
 
-        return new IReadOnlyCollection<int>[] { jogo };
+        return new[] { jogo };
     }
 }

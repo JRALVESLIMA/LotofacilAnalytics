@@ -17,9 +17,10 @@ public class EstrategiaDezenasFixas : IEstrategia
                 nameof(historico));
         }
 
-        IReadOnlyCollection<int> jogo =
-            Enumerable.Range(1, 15).ToArray();
+        var dezenasSelecionadas = Enumerable.Range(1, 15).ToArray();
 
-        return new IReadOnlyCollection<int>[] { jogo };
+        IReadOnlyCollection<int> jogo = dezenasSelecionadas;
+
+        return new[] { jogo };
     }
 }

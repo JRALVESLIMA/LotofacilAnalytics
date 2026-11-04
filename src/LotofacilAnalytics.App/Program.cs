@@ -28,6 +28,16 @@ var relatorio =
 
 reporter.ExibirRelatorio(relatorio);
 
+
+Console.WriteLine("Executando comparação de estratégias...");
+Console.WriteLine();
+
+var resultadosComparacao =
+    aplicacaoService.CompararEstrategias(concursos);
+
+reporter.ExibirComparacaoEstrategias(
+    resultadosComparacao);
+
 static string EncontrarRaizProjeto()
 {
     var diretorio = new DirectoryInfo(

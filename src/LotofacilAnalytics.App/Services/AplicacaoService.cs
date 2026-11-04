@@ -4,6 +4,9 @@ using LotofacilAnalytics.DataCollector.Mappers;
 using LotofacilAnalytics.DataCollector.Storage;
 using LotofacilAnalytics.DataCollector.Validation;
 using LotofacilAnalytics.Domain.Entities;
+using LotofacilAnalytics.Backtesting.Models;
+using LotofacilAnalytics.Backtesting.Services;
+using LotofacilAnalytics.Backtesting.Strategies;
 
 namespace LotofacilAnalytics.App.Services;
 
@@ -27,6 +30,53 @@ public class AplicacaoService
             mapper);
 
         return await reader.LerTodosAsync();
+    }
+
+    public IReadOnlyCollection<ComparacaoEstrategiaResultado>
+        CompararEstrategias(List<Concurso> concursos)
+    {
+        ArgumentNullException.ThrowIfNull(concursos);
+
+        const int quantidadeConcursosAvaliados = 101;
+
+        var concursosOrdenados = concursos
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        if (concursosOrdenados.Count <= quantidadeConcursosAvaliados)
+        {
+            throw new ArgumentException(
+                "O histórico precisa conter pelo menos 102 concursos.",
+                nameof(concursos));
+        }
+
+        var numeroInicial = concursosOrdenados[
+            ^quantidadeConcursosAvaliados].Numero;
+
+        var numeroFinal = concursosOrdenados[^1].Numero;
+
+        var estrategias = new Dictionary<string, IEstrategia>
+        {
+            ["Frequencia Geral"] =
+                new EstrategiaFrequenciaDezenas(),
+
+            ["Frequencia Recente"] =
+                new EstrategiaFrequenciaRecente(50),
+
+            ["Dezenas Fixas"] =
+                new EstrategiaDezenasFixas(),
+
+            ["Aleatoria"] =
+                new EstrategiaAleatoria(semente: 12345)
+        };
+
+        var comparacaoService = new ComparacaoEstrategiasService();
+
+        return comparacaoService.Comparar(
+            concursosOrdenados,
+            estrategias,
+            numeroInicial,
+            numeroFinal);
     }
 
     public RelatorioAnalise ExecutarAnalises(

@@ -169,58 +169,87 @@ public class BacktestingIntegracaoTests
         var numeroInicial = concursosOrdenados[^101].Numero;
         var numeroFinal = concursosOrdenados[^1].Numero;
 
-        var service = new BacktestingService();
+        var estrategias = new Dictionary<string, IEstrategia>
+        {
+            ["Frequencia Geral"] = new EstrategiaFrequenciaDezenas(),
+            ["Frequencia Recente"] = new EstrategiaFrequenciaRecente(50),
+            ["Dezenas Fixas"] = new EstrategiaDezenasFixas(),
+            ["Aleatoria"] = new EstrategiaAleatoria(semente: 12345)
+        };
 
-        var resultadoFrequencia = service.ExecutarConsolidado(
+        var service = new ComparacaoEstrategiasService();
+
+        var resultados = service.Comparar(
             historico,
-            new EstrategiaFrequenciaDezenas(),
+            estrategias,
             numeroInicial,
             numeroFinal);
 
-        var resultadoDezenasFixas = service.ExecutarConsolidado(
-            historico,
-            new EstrategiaDezenasFixas(),
-            numeroInicial,
-            numeroFinal);
+        resultados.Should().HaveCount(4);
 
-        resultadoFrequencia.QuantidadeRodadas
-            .Should()
-            .Be(resultadoDezenasFixas.QuantidadeRodadas);
-
-        resultadoFrequencia.QuantidadeJogos
-            .Should()
-            .Be(resultadoDezenasFixas.QuantidadeJogos);
-
-        resultadoFrequencia.Rodadas
-            .Select(rodada => rodada.ConcursoAlvo.Numero)
+        resultados
+            .Select(resultado => resultado.NomeEstrategia)
             .Should()
             .Equal(
-                resultadoDezenasFixas.Rodadas
-                    .Select(rodada => rodada.ConcursoAlvo.Numero));
+                "Frequencia Geral",
+                "Frequencia Recente",
+                "Dezenas Fixas",
+                "Aleatoria");
 
-        resultadoFrequencia.Rodadas.Should().OnlyContain(
-            rodada => rodada.ResultadosJogos.Count == 1);
+        var concursosEsperados = concursosOrdenados
+            .Where(concurso =>
+                concurso.Numero >= numeroInicial &&
+                concurso.Numero <= numeroFinal)
+            .Select(concurso => concurso.Numero)
+            .ToArray();
 
-        resultadoDezenasFixas.Rodadas.Should().OnlyContain(
-            rodada => rodada.ResultadosJogos.Count == 1);
+        concursosEsperados.Should().HaveCount(101);
 
-        resultadoFrequencia.MediaAcertos
-            .Should()
-            .BeInRange(0, 15);
+        foreach (var resultado in resultados)
+        {
+            resultado.QuantidadeRodadas.Should().Be(101);
+            resultado.QuantidadeJogos.Should().Be(101);
 
-        resultadoDezenasFixas.MediaAcertos
-            .Should()
-            .BeInRange(0, 15);
+            resultado.Resultado.Rodadas
+                .Select(rodada => rodada.ConcursoAlvo.Numero)
+                .Should()
+                .Equal(concursosEsperados);
 
-        resultadoFrequencia.ObterDistribuicaoAcertos()
-            .Values.Sum()
-            .Should()
-            .Be(resultadoFrequencia.QuantidadeJogos);
+            resultado.MediaAcertos.Should().BeInRange(0, 15);
+            resultado.MaiorAcertos.Should().BeInRange(0, 15);
+            resultado.MenorAcertos.Should().BeInRange(0, 15);
 
-        resultadoDezenasFixas.ObterDistribuicaoAcertos()
-            .Values.Sum()
-            .Should()
-            .Be(resultadoDezenasFixas.QuantidadeJogos);
+            resultado.MaiorAcertos
+                .Should()
+                .BeGreaterThanOrEqualTo(resultado.MenorAcertos);
+
+            resultado.JogosCom11OuMaisAcertos
+                .Should()
+                .BeInRange(0, resultado.QuantidadeJogos);
+
+            resultado.JogosCom13OuMaisAcertos
+                .Should()
+                .BeInRange(0, resultado.JogosCom11OuMaisAcertos);
+
+            resultado.Resultado.ObterDistribuicaoAcertos()
+                .Values.Sum()
+                .Should()
+                .Be(resultado.QuantidadeJogos);
+
+            foreach (var rodada in resultado.Resultado.Rodadas)
+            {
+                rodada.ResultadosJogos.Should().ContainSingle();
+
+                var jogo = rodada.ResultadosJogos.Single();
+
+                jogo.Jogo.Should().HaveCount(15);
+                jogo.Jogo.Should().OnlyHaveUniqueItems();
+                jogo.Jogo.Should().OnlyContain(
+                    dezena => dezena >= 1 && dezena <= 25);
+
+                jogo.QuantidadeAcertos.Should().BeInRange(0, 15);
+            }
+        }
     }
 
     [Fact]
