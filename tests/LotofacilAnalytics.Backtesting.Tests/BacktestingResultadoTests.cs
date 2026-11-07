@@ -156,6 +156,122 @@ public class BacktestingResultadoTests
         resultado.MediaAcertos.Should().Be(10);
     }
 
+    [Fact]
+    public void Deve_calcular_a_variancia_populacional_dos_acertos()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 7, 8, 9, 10, 11);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.VarianciaAcertos.Should().BeApproximately(2.0, 0.0001);
+    }
+
+    [Fact]
+    public void Deve_calcular_o_desvio_padrao_dos_acertos()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 7, 8, 9, 10, 11);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.DesvioPadraoAcertos
+            .Should()
+            .BeApproximately(Math.Sqrt(2), 0.0001);
+    }
+
+    [Fact]
+    public void Deve_calcular_a_mediana_com_quantidade_impar_de_jogos()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 7, 8, 9, 10, 11);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.MedianaAcertos.Should().Be(9);
+    }
+
+    [Fact]
+    public void Deve_calcular_a_mediana_com_quantidade_par_de_jogos()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 8, 9, 10, 11);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.MedianaAcertos.Should().Be(9.5);
+    }
+
+    [Fact]
+    public void Deve_calcular_o_percentual_de_jogos_com_11_ou_mais_acertos()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 7, 8, 9, 10, 11);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.PercentualJogosCom11OuMaisAcertos
+            .Should()
+            .BeApproximately(20.0, 0.0001);
+    }
+
+    [Fact]
+    public void Deve_retornar_variancia_e_desvio_padrao_zero_para_acertos_iguais()
+    {
+        var rodada = CriarRodadaComAcertos(
+            100, 9, 9, 9);
+
+        var resultado = new BacktestingResultado(
+            new[] { rodada });
+
+        resultado.VarianciaAcertos.Should().Be(0);
+        resultado.DesvioPadraoAcertos.Should().Be(0);
+    }
+
+    [Fact]
+    public void Deve_retornar_indicadores_estatisticos_zerados_sem_jogos()
+    {
+        var resultado = new BacktestingResultado(
+            new[] { CriarRodada(100) });
+
+        resultado.VarianciaAcertos.Should().Be(0);
+        resultado.DesvioPadraoAcertos.Should().Be(0);
+        resultado.MedianaAcertos.Should().Be(0);
+        resultado.PercentualJogosCom11OuMaisAcertos.Should().Be(0);
+    }
+
+    [Fact]
+    public void Deve_calcular_indicadores_ignorando_rodadas_sem_jogos()
+    {
+        var rodadas = new[]
+        {
+            CriarRodada(100),
+            CriarRodadaComAcertos(101, 8, 10),
+            CriarRodada(102),
+            CriarRodadaComAcertos(103, 12)
+        };
+
+        var resultado = new BacktestingResultado(rodadas);
+
+        resultado.QuantidadeJogos.Should().Be(3);
+        resultado.MediaAcertos.Should().Be(10);
+        resultado.VarianciaAcertos
+            .Should()
+            .BeApproximately(8.0 / 3.0, 0.0001);
+        resultado.DesvioPadraoAcertos
+            .Should()
+            .BeApproximately(Math.Sqrt(8.0 / 3.0), 0.0001);
+        resultado.MedianaAcertos.Should().Be(10);
+        resultado.PercentualJogosCom11OuMaisAcertos
+            .Should()
+            .BeApproximately(100.0 / 3.0, 0.0001);
+    }
+
     private static RodadaBacktesting CriarRodada(
         int numeroConcurso,
         int quantidadeJogos = 0)

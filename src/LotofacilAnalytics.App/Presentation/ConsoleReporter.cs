@@ -1,6 +1,7 @@
 using LotofacilAnalytics.App.Models;
 using LotofacilAnalytics.Domain.Entities;
 using LotofacilAnalytics.Backtesting.Models;
+using LotofacilAnalytics.Backtesting.Services;
 
 namespace LotofacilAnalytics.App.Presentation;
 
@@ -409,6 +410,192 @@ public class ConsoleReporter
         Console.WriteLine();
         Console.WriteLine(
             "Resultados históricos: não representam previsão de sorteios futuros.");
+        Console.WriteLine();
+    }
+
+
+    public void ExibirDistribuicaoAcertosEstrategias(
+        IReadOnlyCollection<ComparacaoEstrategiaResultado> resultados)
+    {
+        ArgumentNullException.ThrowIfNull(resultados);
+
+        ExibirTitulo("DISTRIBUIÇÃO DE ACERTOS POR ESTRATÉGIA");
+
+        if (resultados.Count == 0)
+        {
+            Console.WriteLine("Nenhuma estratégia foi avaliada.");
+            Console.WriteLine();
+            return;
+        }
+
+        var probabilidadeService = new ProbabilidadeTeoricaService();
+
+        foreach (var estrategia in resultados
+            .OrderBy(resultado => resultado.NomeEstrategia))
+        {
+            Console.WriteLine(
+                $"Estratégia: {estrategia.NomeEstrategia}");
+
+            Console.WriteLine(
+                $"{"Acertos",-10} " +
+                $"{"Jogos",10} " +
+                $"{"Observado",12} " +
+                $"{"Teórico",12}");
+
+            Console.WriteLine(new string('-', 49));
+
+            var distribuicao =
+                estrategia.Resultado.ObterDistribuicaoAcertos();
+
+            for (int acertos = 5; acertos <= 15; acertos++)
+            {
+                distribuicao.TryGetValue(
+                    acertos,
+                    out int quantidade);
+
+                double percentualObservado =
+                    estrategia.QuantidadeJogos == 0
+                        ? 0
+                        : quantidade * 100.0 /
+                        estrategia.QuantidadeJogos;
+
+                double percentualTeorico =
+                    probabilidadeService.CalcularProbabilidade(acertos) * 100;
+
+                Console.WriteLine(
+                    $"{acertos,-10} " +
+                    $"{quantidade,10} " +
+                    $"{percentualObservado,11:F2}% " +
+                    $"{percentualTeorico,11:F2}%");
+            }
+
+            Console.WriteLine();
+        }
+    }
+
+    public void ExibirComparacaoPeriodos(
+        IReadOnlyCollection<ComparacaoPeriodoResultado> resultados)
+    {
+        ArgumentNullException.ThrowIfNull(resultados);
+
+        ExibirTitulo("COMPARAÇÃO POR PERÍODOS HISTÓRICOS");
+
+        if (resultados.Count == 0)
+        {
+            Console.WriteLine("Nenhum período foi avaliado.");
+            Console.WriteLine();
+            return;
+        }
+
+        var grupos = resultados
+            .GroupBy(resultado => new
+            {
+                resultado.NumeroInicial,
+                resultado.NumeroFinal
+            })
+            .OrderBy(grupo => grupo.Key.NumeroInicial);
+
+        foreach (var grupo in grupos)
+        {
+            Console.WriteLine(
+                $"Período: {grupo.Key.NumeroInicial} - {grupo.Key.NumeroFinal}");
+
+            Console.WriteLine();
+
+            Console.WriteLine(
+                $"{"Estratégia",-20} " +
+                $"{"Jogos",6} " +
+                $"{"Média",7} " +
+                $"{"Mediana",8} " +
+                $"{"Desvio",8} " +
+                $"{"11+ %",8}");
+
+            Console.WriteLine(new string('-', 65));
+
+            foreach (var resultado in grupo
+                .OrderByDescending(item => item.MediaAcertos))
+            {
+                var indicadores = resultado.Resultado;
+
+                if (resultado.QuantidadeJogos == 0)
+                {
+                    Console.WriteLine(
+                        $"{resultado.NomeEstrategia,-20} " +
+                        $"{0,6} {"Sem dados",36}");
+
+                    continue;
+                }
+
+                Console.WriteLine(
+                    $"{resultado.NomeEstrategia,-20} " +
+                    $"{resultado.QuantidadeJogos,6} " +
+                    $"{indicadores.MediaAcertos,7:F2} " +
+                    $"{indicadores.MedianaAcertos,8:F2} " +
+                    $"{indicadores.DesvioPadraoAcertos,8:F2} " +
+                    $"{indicadores.PercentualJogosCom11OuMaisAcertos,8:F2}");
+            }
+
+            Console.WriteLine();
+        }
+
+        Console.WriteLine(
+            "Indicadores calculados com base nos jogos históricos avaliados.");
+
+        Console.WriteLine(
+            "Resultados históricos não representam previsão de sorteios futuros.");
+
+        Console.WriteLine();
+    }
+
+    public void ExibirConsolidacaoEstrategias(
+        IReadOnlyCollection<ConsolidacaoEstrategiaResultado> resultados)
+    {
+        ArgumentNullException.ThrowIfNull(resultados);
+
+        ExibirTitulo("CONSOLIDAÇÃO ESTATÍSTICA DAS ESTRATÉGIAS");
+
+        if (resultados.Count == 0)
+        {
+            Console.WriteLine("Nenhuma estratégia foi consolidada.");
+            Console.WriteLine();
+            return;
+        }
+
+        Console.WriteLine(
+            $"{"Estratégia",-20} " +
+            $"{"Períodos",8} " +
+            $"{"Jogos",7} " +
+            $"{"Média",7} " +
+            $"{"Mediana",8} " +
+            $"{"Desvio",8} " +
+            $"{"11+ %",8}");
+
+        Console.WriteLine(new string('-', 74));
+
+        foreach (var resultado in resultados
+            .OrderByDescending(item => item.MediaAcertos)
+            .ThenBy(item => item.NomeEstrategia))
+        {
+            Console.WriteLine(
+                $"{resultado.NomeEstrategia,-20} " +
+                $"{resultado.QuantidadePeriodos,8} " +
+                $"{resultado.QuantidadeJogos,7} " +
+                $"{resultado.MediaAcertos,7:F2} " +
+                $"{resultado.MedianaAcertos,8:F2} " +
+                $"{resultado.DesvioPadraoAcertos,8:F2} " +
+                $"{resultado.PercentualJogosCom11OuMaisAcertos,8:F2}");
+        }
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Indicadores consolidados a partir dos jogos " +
+            "avaliados nos períodos históricos.");
+
+        Console.WriteLine(
+            "Resultados históricos não representam previsão " +
+            "de sorteios futuros.");
+
         Console.WriteLine();
     }
 

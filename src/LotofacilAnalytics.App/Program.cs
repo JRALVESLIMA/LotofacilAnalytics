@@ -38,6 +38,27 @@ var resultadosComparacao =
 reporter.ExibirComparacaoEstrategias(
     resultadosComparacao);
 
+reporter.ExibirDistribuicaoAcertosEstrategias(
+    resultadosComparacao);
+
+Console.WriteLine("Executando comparação por períodos históricos...");
+Console.WriteLine();
+
+var resultadosPeriodos =
+    aplicacaoService.CompararEstrategiasPorPeriodos(concursos);
+
+reporter.ExibirComparacaoPeriodos(resultadosPeriodos);
+
+
+Console.WriteLine("Consolidando resultados das estratégias...");
+Console.WriteLine();
+
+var resultadosConsolidados =
+    aplicacaoService.ConsolidarEstrategias(resultadosPeriodos);
+
+reporter.ExibirConsolidacaoEstrategias(
+    resultadosConsolidados);
+
 static string EncontrarRaizProjeto()
 {
     var diretorio = new DirectoryInfo(

@@ -1,3 +1,4 @@
+
 using LotofacilAnalytics.Analysis.Services;
 using LotofacilAnalytics.App.Models;
 using LotofacilAnalytics.DataCollector.Mappers;
@@ -55,7 +56,63 @@ public class AplicacaoService
 
         var numeroFinal = concursosOrdenados[^1].Numero;
 
-        var estrategias = new Dictionary<string, IEstrategia>
+        var estrategias = CriarEstrategias();
+
+        var comparacaoService = new ComparacaoEstrategiasService();
+
+        return comparacaoService.Comparar(
+            concursosOrdenados,
+            estrategias,
+            numeroInicial,
+            numeroFinal);
+    }
+
+    public IReadOnlyCollection<ComparacaoPeriodoResultado>
+        CompararEstrategiasPorPeriodos(List<Concurso> concursos)
+    {
+        ArgumentNullException.ThrowIfNull(concursos);
+
+        var concursosOrdenados = concursos
+            .OrderBy(concurso => concurso.Numero)
+            .ToList();
+
+        var periodos = new (int Inicio, int Fim)[]
+        {
+            (500, 599),
+            (1500, 1599),
+            (2500, 2599),
+            (3695, 3794)
+        };
+
+        var estrategias = CriarEstrategias()
+            .Select(item => (
+                Nome: item.Key,
+                Estrategia: item.Value))
+            .ToList();
+
+        var comparacaoService = new ComparacaoPeriodosService();
+
+        return comparacaoService.Comparar(
+            concursosOrdenados,
+            periodos,
+            estrategias);
+    }
+
+    public IReadOnlyCollection<ConsolidacaoEstrategiaResultado>
+        ConsolidarEstrategias(
+            IReadOnlyCollection<ComparacaoPeriodoResultado> resultados)
+    {
+        ArgumentNullException.ThrowIfNull(resultados);
+
+        var consolidacaoService =
+            new ConsolidacaoEstrategiasService();
+
+        return consolidacaoService.Consolidar(resultados);
+    }
+
+    private static Dictionary<string, IEstrategia> CriarEstrategias()
+    {
+        return new Dictionary<string, IEstrategia>
         {
             ["Frequencia Geral"] =
                 new EstrategiaFrequenciaDezenas(),
@@ -69,14 +126,6 @@ public class AplicacaoService
             ["Aleatoria"] =
                 new EstrategiaAleatoria(semente: 12345)
         };
-
-        var comparacaoService = new ComparacaoEstrategiasService();
-
-        return comparacaoService.Comparar(
-            concursosOrdenados,
-            estrategias,
-            numeroInicial,
-            numeroFinal);
     }
 
     public RelatorioAnalise ExecutarAnalises(
